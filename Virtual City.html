@@ -1,6 +1,6 @@
 <html>
   <head>
-    <title>Virtual City WIP</title>
+    <title>Simple Geometry Test</title>
   </head>
 
   <style>
@@ -52,7 +52,7 @@
 
     //create the perspective camera
     //for parameters see https://threejs.org/docs/#api/cameras/PerspectiveCamera
-    var camera = new THREE.PerspectiveCamera(45,ratio,0.1,1000);
+    var camera = new THREE.PerspectiveCamera(45,ratio,0.1,10000);
     camera.position.set(0,0,-20);
 
     control = new THREE.OrbitControls( camera );
@@ -64,24 +64,60 @@
     var ambientlight = new THREE.AmbientLight(new THREE.Color(1,1,1),0.3);
     scene.add(ambientlight);
 
-    //lighting
-    //basic light from camera towards the scene
+    //terrain material
+    var material_terrain = new THREE.MeshLambertMaterial();
+    material_terrain.color =  new THREE.Color(0.9,0.7,0.2);
+    material_terrain.wireframe = false;
+    material_terrain.side = THREE.DoubleSide;
+    var geometry_terrain = new THREE.PlaneGeometry(1000,1000,200,200);
+    var mesh_terrain = new THREE.Mesh(geometry_terrain, material_terrain);
+    mesh_terrain.position.y = - 100;
+    mesh_terrain.rotation.x = Math.PI / 2;
+    mesh_terrain.receiveShadow = true;
+    mesh_terrain.castShadow = false;
+    scene.add(mesh_terrain);
 
+    var time_multiplier = 1;
 
+    var spotlight_day = new THREE.SpotLight(new THREE.Color(0.9,0.7,0.2), 0.5);
+    spotlight_day.position.x = (time_multiplier * 300);
+    spotlight_day.position.y = -(time_multiplier * 300);
+    spotlight_day.rotation.x = ( 0, time_multiplier, 0 );
+    spotlight_day.angle = (Math.PI / 2);
+    spotlight_day.penumbra = 0.3;
+    spotlight_day.castShadow = true;
+    spotlight_day.target= mesh_terrain;
+    scene.add(spotlight_day);
+    var spotLightHelper_day = new THREE.SpotLightHelper( spotlight_day );
+    scene.add( spotLightHelper_day );
 
+    //var spotlight_night = new THREE.SpotLight(new THREE.Color(0.2,0.7,0.9), 0.5);
+    spotlight_night.position.x= -(time_multiplier * 300);
+    spotlight_night.position.y = (time_multiplier * 300);
+    spotlight_night.angle = (-(Math.PI / 2));
+    spotlight_night.penumbra = 0.3;
+    spotlight_night.castShadow = true;
+    spotlight_night.target= mesh_terrain;
+    scene.add(spotlight_night);
+    var spotLightHelper_night = new THREE.SpotLightHelper( spotlight_night );
+    scene.add( spotLightHelper_night );
 
     //final update loop
     var MyUpdateLoop = function ( )
     {
-
+      spotlight_day.position.x = (time_multiplier * 300);
+      spotlight_day.position.y = -(time_multiplier * 300);
+      spotlight_night.position.x= -(time_multiplier * 300);
+      spotlight_night.position.y = (time_multiplier * 300);
+      spotlight_day.target= mesh_terrain;
+      spotlight_night.target= mesh_terrain;
+      spotlight_night.rotation.z.set = ( 0, time_multiplier, 0 );
       control.update();
       //call the render with the scene and the camera
       renderer.render(scene,camera);
       //finally perform a recoursive call to update again
       //this must be called because the mouse change the camera position
       requestAnimationFrame(MyUpdateLoop);
-
-      Animate();
 
     };
 
@@ -111,10 +147,14 @@
  function buildGui() {
        gui = new dat.GUI();
        var params = {
-
+         time: time_multiplier,
+         colour_day: spotlight_day.color.getHex(),
+         colour_night: spotlight_day.color.getHex()
        }
 
-       gui.add();
+       gui.add( params, 'time', -1, 1 ).onChange( function ( val ) {
+         time_multiplier = val;
+       } );
        gui.open();
      }
 
