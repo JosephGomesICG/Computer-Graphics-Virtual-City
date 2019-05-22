@@ -38,6 +38,14 @@
       <p>Virtual City Test Code<br>
     </div>
     <script>
+
+    var loader = new THREE.ObjectLoader();
+    var houses = [];
+
+    //loader.load("models/model1_house.json", function ( house1 ) {
+
+     //scene.add( house1 );
+    //});
     //create the scene
     var scene = new THREE.Scene( );
     //create the webgl renderer
@@ -57,9 +65,7 @@
     scene.add(ambientlight);
     //lighting
     //basic light from camera towards the scene
-
     var time_multiplier = 1;
-
     var spotlight_day = new THREE.SpotLight(new THREE.Color(0.9,0.7,0.2), 0.5);
     spotlight_day.position.x = (time_multiplier * 300);
     spotlight_day.position.y = -(time_multiplier * 300);
@@ -71,7 +77,6 @@
     scene.add(spotlight_day);
     //var spotLightHelper_day = new THREE.SpotLightHelper( spotlight_day );
     //scene.add( spotLightHelper_day );
-
     var spotlight_night = new THREE.SpotLight(new THREE.Color(0.2,0.7,0.9), 0.5);
     spotlight_night.position.x= -(time_multiplier * 300);
     spotlight_night.position.y = (time_multiplier * 300);
@@ -82,8 +87,6 @@
     scene.add(spotlight_night);
     //var spotLightHelper_night = new THREE.SpotLightHelper( spotlight_night );
     //scene.add( spotLightHelper_night );
-
-
     var xS = 63, yS = 63;
     terrainScene = THREE.Terrain({
       easing: THREE.Terrain.Linear,
@@ -101,16 +104,23 @@
     });
     var geo = terrainScene.children[0].geometry;
     decoScene = THREE.Terrain.ScatterMeshes(geo, {
-    mesh: new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 12, 6)),
-    w: xS,
-    h: yS,
-    spread: 0.02,
-    randomness: Math.random,
-});
+      mesh: new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 12, 6)),
+      w: xS,
+      h: yS,
+      spread: 0.02,
+      randomness: Math.random,
+    });
+    loader.load("models/model1_house.json", function ( house ) {
+      for (i = 0; i < 10; i++) {
+          houses[i] = house.clone();
+          houses[i].position.x += 20 * i;
+          scene.add( houses[i] );
+        }
+    });
+
 terrainScene.add(decoScene);
 // Assuming you already have your global scene, add the terrain to it
     scene.add(terrainScene);
-
     //final update loop
     var MyUpdateLoop = function ( )
     {
@@ -157,17 +167,14 @@ terrainScene.add(decoScene);
        gui.addColor( params, 'color_day' ).onChange( function ( val ) {
          spotlight_day.color.setHex(val);
        } );
-
        gui.addColor( params, 'color_night' ).onChange( function ( val ) {
          spotlight_night.color.setHex(val);
        } );
-
        gui.add( params, 'time', -1, 1 ).onChange( function ( val ) {
          time_multiplier = val;
        } );
        gui.open();
      }
-
   buildGui();
     </script>
   </body>
