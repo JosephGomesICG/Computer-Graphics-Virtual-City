@@ -1,0 +1,76 @@
+{
+	"metadata": {
+		"version": 4.5,
+		"type": "Object",
+		"generator": "Object3D.toJSON"
+	},
+	"geometries": [
+		{
+			"uuid": "4A734D64-07A5-4900-B0AF-47BCE54BD84F",
+			"type": "SphereBufferGeometry",
+			"radius": 1,
+			"widthSegments": 8,
+			"heightSegments": 6,
+			"phiStart": 0,
+			"phiLength": 6.283185,
+			"thetaStart": 0,
+			"thetaLength": 3.141593
+		},
+		{
+			"uuid": "BAD91307-FEE0-4EE7-A7D7-10132383CE66",
+			"type": "CylinderBufferGeometry",
+			"radiusTop": 1,
+			"radiusBottom": 1,
+			"height": 1,
+			"radialSegments": 8,
+			"heightSegments": 1,
+			"openEnded": false,
+			"thetaStart": 0,
+			"thetaLength": 6.283185
+		}],
+	"materials": [
+		{
+			"uuid": "D996B6D4-F189-48E1-893C-2E1050A9E559",
+			"type": "MeshLambertMaterial",
+			"color": 32768,
+			"emissive": 0,
+			"depthFunc": 3,
+			"depthTest": true,
+			"depthWrite": true
+		},
+		{
+			"uuid": "57F7E006-53AF-4A56-ACB6-0C262ECF26E7",
+			"type": "MeshLambertMaterial",
+			"color": 8404992,
+			"emissive": 0,
+			"depthFunc": 3,
+			"depthTest": true,
+			"depthWrite": true
+		}],
+	"object": {
+		"uuid": "4D89A68E-B1C0-4F87-B279-4DF00C5E5B71",
+		"type": "Group",
+		"name": "Group",
+		"layers": 1,
+		"matrix": [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
+		"children": [
+			{
+				"uuid": "9F006F94-A991-4CC5-8810-8875F8D00FCC",
+				"type": "Mesh",
+				"name": "Sphere",
+				"layers": 1,
+				"matrix": [0.512237,0,0,0,0,0.512237,0,0,0,0,0.512237,0,0,1.435636,0,1],
+				"geometry": "4A734D64-07A5-4900-B0AF-47BCE54BD84F",
+				"material": "D996B6D4-F189-48E1-893C-2E1050A9E559"
+			},
+			{
+				"uuid": "AD6600FC-F283-46DF-85CB-7CE05EB95F90",
+				"type": "Mesh",
+				"name": "Cylinder",
+				"layers": 1,
+				"matrix": [0.04162,0,0,0,0,1.2,0,0,0,0,0.04162,0,0,0.550014,0,1],
+				"geometry": "BAD91307-FEE0-4EE7-A7D7-10132383CE66",
+				"material": "57F7E006-53AF-4A56-ACB6-0C262ECF26E7"
+			}]
+	}
+}

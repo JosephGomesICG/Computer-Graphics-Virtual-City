@@ -1,0 +1,217 @@
+<html>
+  <head>
+    <title>VIRTUAL CITY PROTOTYPE</title>
+  </head>
+
+  <style>
+  body {margin: 0;}
+  canvas {width: 100%; height: 100%;}
+  </style>
+
+  <body>
+    <!--three.js library-->
+    <script src="js/three.js"> </script>
+    <!--trackball code-->
+    <script src="js/OrbitControls.js"> </script>
+    <!--GUI code-->
+    <script src="js/dat.gui.min.js"></script>
+    <!--Terrain code-->
+    <script src="js/THREE.Terrain.min.js"> </script>
+
+    
+
+    <style>
+    			body {
+    				font-family: Monospace;
+    				background-color: #000;
+    				color: #fff;
+    				margin: 0px;
+    				overflow: hidden;
+    			}
+    			#info {
+    				position: absolute;
+    				top: 10px;
+    				width: 100%;
+    				text-align: center;
+    			}
+    </style>
+
+    <div id="info">
+      <p>Virtual City Test Code<br>
+    </div>
+    <script>
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min)) + min; //The maximum is exclusive and the minimum is inclusive
+  }
+    var loader = new THREE.ObjectLoader();
+    var houses = [];
+
+    //loader.load("models/model1_house.json", function ( house1 ) {
+
+     //scene.add( house1 );
+    //});
+
+    //check intersection
+    var raycaster = new THREE.Raycaster();
+    //create the scene
+    var scene = new THREE.Scene( );
+    //create the webgl renderer
+    var renderer = new THREE.WebGLRenderer( );
+    renderer.setSize(window.innerWidth,window.innerHeight);
+    //add the renderer to the current document
+    document.body.appendChild(renderer.domElement );
+    var ratio = window.innerWidth/window.innerHeight;
+    //create the perspective camera
+    //for parameters see https://threejs.org/docs/#api/cameras/PerspectiveCamera
+    var camera = new THREE.PerspectiveCamera(45,ratio,0.1,10000);
+    camera.position.set(0,0,-1000);
+    control = new THREE.OrbitControls( camera );
+
+
+    //then add ambient
+    //ambient lighting
+    var ambientlight = new THREE.AmbientLight(new THREE.Color(1,1,1),0.3);
+    scene.add(ambientlight);
+    //lighting
+    //basic light from camera towards the scene
+    var time_multiplier = 1;
+    var spotlight_day = new THREE.SpotLight(new THREE.Color(0.9,0.7,0.2), 0.5);
+    spotlight_day.position.x = (time_multiplier * 300);
+    spotlight_day.position.y = -(time_multiplier * 300);
+    spotlight_day.rotation.x = ( 0, time_multiplier, 0 );
+    spotlight_day.angle = (-(Math.PI / 2));
+    spotlight_day.penumbra = 0.3;
+    spotlight_day.castShadow = true;
+    //spotlight_day.target= floor;
+    scene.add(spotlight_day);
+    //var spotLightHelper_day = new THREE.SpotLightHelper( spotlight_day );
+    //scene.add( spotLightHelper_day );
+    var spotlight_night = new THREE.SpotLight(new THREE.Color(0.2,0.7,0.9), 0.5);
+    spotlight_night.position.x= -(time_multiplier * 300);
+    spotlight_night.position.y = (time_multiplier * 300);
+    spotlight_night.angle = (-(Math.PI / 2));
+    spotlight_night.penumbra = 0.3;
+    spotlight_night.castShadow = true;
+    //spotlight_night.target= floor;
+    scene.add(spotlight_night);
+    //var spotLightHelper_night = new THREE.SpotLightHelper( spotlight_night );
+    //scene.add( spotLightHelper_night );
+    var xS = 63, yS = 63;
+    terrainScene = THREE.Terrain({
+      easing: THREE.Terrain.Linear,
+      frequency: 3.5,
+      heightmap: THREE.Terrain.DiamondSquare,
+      material: new THREE.MeshLambertMaterial({color: 0xffffff}),
+      maxHeight: 50,
+      minHeight: 10,
+      steps: 10,
+      useBufferGeometry: false,
+      xSegments: xS,
+      xSize: 1024,
+      ySegments: yS,
+      ySize: 1024,
+    });
+    var geo = terrainScene.children[0].geometry;
+    decoScene = THREE.Terrain.ScatterMeshes(geo, {
+      mesh: new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 12, 6)),
+      w: xS,
+      h: yS,
+      spread: 0.02,
+      randomness: Math.random,
+    });
+    loader.load("models/m_house1_seasonSpring.json", function ( house ) {
+      for (i = 0; i < 10; i++) {
+          houses[i] = house.clone();
+          houses[i].position.x = getRandomInt(-200,200);
+          houses[i].position.z = getRandomInt(-200,200);
+          raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
+          var intersects = raycaster.intersectObject(terrainScene);
+          houses[i].position.y =50;
+          //houses[i].position.y = 40;
+          houses[i].scale.set(50,50,50);
+          scene.add( houses[i] );
+        }
+        
+    });
+
+    var raycaster = new THREE.Raycaster();
+    var mouse = new THREE.Vector2();
+
+    function onMouseDown( event ) {
+        mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+        mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+        // update the picking ray with the camera and mouse position
+        raycaster.setFromCamera( mouse, camera );
+        // calculate objects intersecting the picking ray
+        console.log(scene.children);
+        var intersects = raycaster.intersectObjects( scene.children );
+        console.log(intersects.length);
+        for ( var i = 0; i < intersects.length; i++ ) {
+            intersects[ i ].object.position.x = 300;
+        }
+    }
+terrainScene.add(decoScene);
+// Assuming you already have your global scene, add the terrain to it
+    scene.add(terrainScene);
+    //final update loop
+    var MyUpdateLoop = function ( )
+    {
+      spotlight_day.position.x = 5000;
+      spotlight_day.position.y = -(time_multiplier * 3500);
+      spotlight_night.position.x= -5000;
+      spotlight_night.position.y = (time_multiplier * 3500);
+      //spotlight_day.target= floor;
+      //spotlight_night.target= floor;
+      spotlight_night.rotation.z.set = ( 0, time_multiplier, 0 );
+      control.update();
+      //call the render with the scene and the camera
+      renderer.render(scene,camera);
+      //finally perform a recoursive call to update again
+      //this must be called because the mouse change the camera position
+      requestAnimationFrame(MyUpdateLoop);
+    };
+    requestAnimationFrame(MyUpdateLoop);
+    //this function is called when the window is resized
+    var MyResize = function ( )
+    {
+      //get the new sizes
+      var width = window.innerWidth;
+      var height = window.innerHeight;
+      //then update the renderer
+      renderer.setSize(width,height);
+      //and update the aspect ratio of the camera
+      camera.aspect = width/height;
+      //update the projection matrix given the new values
+      camera.updateProjectionMatrix();
+      //and finally render the scene again
+      renderer.render(scene,camera);
+    };
+    //link the resize of the window to the update of the camera
+    window.addEventListener( 'resize', MyResize);
+    var gui;
+ function buildGui() {
+       gui = new dat.GUI();
+       var params = {
+         time: time_multiplier,
+         color_day: spotlight_day.color.getHex(),
+         color_night: spotlight_night.color.getHex()
+       }
+       gui.addColor( params, 'color_day' ).onChange( function ( val ) {
+         spotlight_day.color.setHex(val);
+       } );
+       gui.addColor( params, 'color_night' ).onChange( function ( val ) {
+         spotlight_night.color.setHex(val);
+       } );
+       gui.add( params, 'time', -1, 1 ).onChange( function ( val ) {
+         time_multiplier = val;
+       } );
+       gui.open();
+     }
+  buildGui();
+  window.addEventListener( 'mousedown', onMouseDown, false );
+  
+    </script>
+  </body>
+</html>
