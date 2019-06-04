@@ -115,6 +115,11 @@
     // Value used to ensure models are not placed beyond the boundaries of the terrain
     var edgeBuffer = 20;
 
+     //Textures for terrain.
+    var winter_texture = new THREE.TextureLoader().load('Textures/winter.jpg');
+    var summer_texture = new THREE.TextureLoader().load('Textures/summer.jpg');
+    var spring_texture = new THREE.TextureLoader().load('Textures/spring.jpg');
+    var autumn_texture = new THREE.TextureLoader().load('Textures/autumn.jpg');
 // Handles the world generation that occurs when the file is loaded and when the user clicks the
 // generateWorld button
 var generateWorld = function () {
