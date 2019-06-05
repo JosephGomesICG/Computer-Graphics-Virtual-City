@@ -1,0 +1,651 @@
+<html>
+  <head>
+    <title>Virtual Civilisation</title>
+  </head>
+
+  <style>
+  body {margin: 0;}
+  canvas {width: 100%; height: 100%;}
+  </style>
+
+  <body>
+    <!--three.js library-->
+    <script src="js/three.js"> </script>
+    <!--trackball code-->
+    <script src="js/OrbitControls.js"> </script>
+    <!--GUI code-->
+    <script src="js/dat.gui.min.js"></script>
+    <!--Terrain code-->
+    <script src="js/THREE.Terrain.min.js"> </script>
+
+    <style>
+    			body {
+    				font-family: Monospace;
+    				background-color: #000;
+    				color: #fff;
+    				margin: 0px;
+    				overflow: hidden;
+    			}
+    			#info {
+    				position: absolute;
+    				top: 10px;
+    				width: 100%;
+    				text-align: center;
+    			}
+    </style>
+
+    
+    <script>
+    function getRandomInt(min, max) {
+      min = Math.ceil(min);
+      max = Math.floor(max);
+      return Math.floor(Math.random() * (max - min)) + min;
+      //The maximum is exclusive and the minimum is inclusive
+    }
+
+    //check intersection
+
+
+    var loader = new THREE.ObjectLoader();
+    var houses = [];
+
+
+    //create the scene
+    var scene = new THREE.Scene( );
+    //create the webgl renderer
+    var renderer = new THREE.WebGLRenderer( );
+    renderer.setSize(window.innerWidth,window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    //add the renderer to the current document
+    document.body.appendChild(renderer.domElement );
+    var ratio = window.innerWidth/window.innerHeight;
+    //create the perspective camera
+    //for parameters see https://threejs.org/docs/#api/cameras/PerspectiveCamera
+    var camera = new THREE.PerspectiveCamera(45,ratio,0.1,10000);
+    camera.position.set(500,600,1000);
+    control = new THREE.OrbitControls( camera, renderer.domElement );
+
+    // Creates ambient light seperate from adjustable spotlights in order to light up scene
+    var ambientlight = new THREE.AmbientLight(new THREE.Color(1,1,1),0.2);
+
+    // Variable that affects positioning of spotlights used to represent day and night
+    var time_multiplier = -1;
+
+    // Create spotlight to represent day
+    var spotlight_day = new THREE.SpotLight(new THREE.Color(1.0,0.9,0.5), 0.5);
+
+    // Create spotlight to represent night
+    var spotlight_night = new THREE.SpotLight(new THREE.Color(0.1,0.5,0.7), 0.5);
+
+    // Sets the size of the terrain on the 'x' plane
+    var setSizeX = 1024;
+
+    // Sets the size of the terrain on the 'z' plane
+    var setSizeY = 1024;
+    //var setSegmentsX = 63;
+    //var setSegmentsY = 63;
+    //var setFrequency = 3.5;
+
+    // Sets the minimum height of any part of the terrain generated
+    var setMinHeight = 50;
+
+    // Sets the maximum height of any part of the terrain generated
+    var setMaxHeight = 50;
+
+    // Represents the number of different y-coordinates terrain will be generated at
+    // The lower the number of steps, the less levels of terrain that will appear upon generation
+    var setSteps = 4;
+
+    // Decides which models will appear after generation and how the terrain is coloured
+    var setSeason = 0;
+
+    // Sets how many copies of the first type of house for a season will be generated
+    var setHouse1Num = 15;
+
+    // Sets how many copies of the second type of house for a season will be generated
+    var setHouse2Num = 15;
+
+    // Sets how many copies of the first type of tree for a season will be generated
+    var setTree1Num = 15;
+
+    // Sets how many copies of the second type of tree for a season will be generated
+    var setTree2Num = 15;
+
+    // Value used to ensure models are not placed beyond the boundaries of the terrain
+    var edgeBuffer = 20;
+
+    //load textures
+    const summer = new THREE.TextureLoader().load('img/summer.jpg', function(summer){
+    	summer.wrapS = THREE.RepeatWrapping;
+	    summer.wrapT = THREE.RepeatWrapping;
+	    summer.offset.set(0,0);
+	    summer.repeat.set(4,4);
+	    });
+    const spring = new THREE.TextureLoader().load('img/spring.jpg',function(spring){
+    	spring.wrapS = THREE.RepeatWrapping;
+    	spring.wrapT = THREE.RepeatWrapping;
+   		spring.offset.set(0,0);
+		spring.repeat.set(4,4)});
+    const winter = new THREE.TextureLoader().load('img/winter.jpg',function(winter){
+    	winter.wrapS = THREE.RepeatWrapping;
+    	winter.wrapT = THREE.RepeatWrapping;
+   		winter.offset.set(0,0);
+		winter.repeat.set(4,4)});
+   const autumn = new THREE.TextureLoader().load('img/autumn.jpg',function(autumn){
+    	autumn.wrapS = THREE.RepeatWrapping;
+    	autumn.wrapT = THREE.RepeatWrapping;
+   		autumn.offset.set(0,0);
+    	autumn.repeat.set(4,4)});
+    
+//const autumn = new THREE.TextureLoader().load('img/autumn.jpg')
+// Handles the world generation that occurs when the file is loaded and when the user clicks the
+// generateWorld button
+var generateWorld = function () {
+  // Removes any objects currently in the scene
+  while(scene.children.length > 0){
+    scene.remove(scene.children[0]);
+  }
+
+
+
+
+  //default texture for terrain material is spring
+  var terrainMaterial = new THREE.MeshLambertMaterial({map: spring});
+
+  //Spring
+  if (setSeason == 0) {
+   terrainMaterial.map = spring;
+   autumn.dispose();
+   winter.dispose();
+   summer.dispose();
+ }
+ //summer
+ if (setSeason == 1) {
+  terrainMaterial.map = summer;
+  autumn.dispose();
+  winter.dispose();
+  spring.dispose();
+}
+
+  //autumn
+  if (setSeason == 2) {
+   terrainMaterial.map = autumn;
+   spring.dispose();
+   winter.dispose();
+   summer.dispose();
+
+ }
+ //winter
+ if (setSeason == 3) {
+  terrainMaterial.map = winter;
+  spring.dispose();
+  summer.dispose();
+  autumn.dispose();
+}
+
+  // If setMinHeight and setMaxHeight are assigned the same value, setMaxHeight is slightly adjusted
+  // Otherwise both variables having the same value will cause the terrain to fail to appear after generation
+
+
+  if (setMinHeight == setMaxHeight) {
+    setMaxHeight = setMinHeight + 1;
+  }
+
+  // Handles the generation of the terrain, being passed the parameters initialised above
+  terrainScene = THREE.Terrain({
+    easing: THREE.Terrain.Linear,
+    //frequency: setFrequency,
+    heightmap: THREE.Terrain.DiamondSquare,
+
+    // Sets the material used by the terrain
+    material: terrainMaterial,
+
+    // Sets the highest point any part of the terrain can reach
+    maxHeight: setMaxHeight,
+
+    // Sets the lowest point any part of the terrain can reach
+    minHeight: setMinHeight,
+
+    // Represents the number of different y-coordinates terrain will be generated at
+    steps: setSteps,
+
+
+    useBufferGeometry: false,
+    //xSegments: setSegmentsX,
+
+    // Sets the size of the terrain on the x-axis
+    xSize: setSizeX,
+    //ySegments: setSegmentsY,
+
+    // Sets the size of the terrain on the z-axis
+    ySize: setSizeY,
+  });
+
+
+  // Positions the 'day' spotlight, can be moved by the user
+  spotlight_day.position.x = (time_multiplier * 300);
+  spotlight_day.position.y = -(time_multiplier * 300);
+  spotlight_day.rotation.x = ( 0, time_multiplier, 0 );
+
+  // Decides the angle of the 'day' spotlight as well as it's area of coverage and whether it casts a shadow
+  spotlight_day.angle = (-(Math.PI / 2));
+  spotlight_day.penumbra = 0.3;
+  spotlight_day.castShadow = true;
+
+  // Adds the 'day' spotlight to the scene
+  scene.add(spotlight_day);
+
+  // Positions the 'night' spotlight, can be moved by the user
+  spotlight_night.position.x= -(time_multiplier * 300);
+  spotlight_night.position.y = (time_multiplier * 300);
+
+  // Decides the angle of the 'day' spotlight as well as it's area of coverage and whether it casts a shadow
+  spotlight_night.angle = (-(Math.PI / 2));
+  spotlight_night.penumbra = 0.3;
+  spotlight_night.castShadow = true;
+
+  // Adds the 'night' spotlight to the scene
+  scene.add(spotlight_night);
+
+  // Adds the terrain to the scene
+  terrainScene.receiveShadow = true;
+  scene.add(terrainScene);
+
+  // Adds the ambient light to the scene
+  scene.add(ambientlight);
+
+  // Loads and places models
+  // Models used depends on the 'season' value, 1 = Spring, 2 = Summer, 3 = Fall, 4 = Winter
+  if (setSeason == 0) {
+    loader.load("models/m_house1_seasonSpring.json", function ( house ) {
+      // Number of models placed for each type is decided by user
+      for (i = 0; i < setHouse1Num; i++) {
+          houses[i] = house.clone();
+          houses[i].castShadow = true;
+          // Places models within the area of the terrain
+          houses[i].position.x = getRandomInt(-(setSizeX/2 - edgeBuffer),(setSizeX/2 - edgeBuffer));
+          houses[i].position.z = getRandomInt(-(setSizeY/2 - edgeBuffer),(setSizeY/2 - edgeBuffer));
+          var raycaster = new THREE.Raycaster();
+          raycaster.set(new THREE.Vector3(houses[i].x,houses[i].y,houses[i].z), new THREE.Vector3(0, -1, 0));
+          var intersects = raycaster.intersectObject(terrainScene);
+          houses[i].position.y =50;
+
+          // Increases size of model to a better visible value
+          houses[i].scale.set(10,10,10);
+
+          // Adds model to scene
+          scene.add( houses[i] );
+        }
+
+    });
+    loader.load("models/m_house2_seasonSpring.json", function ( house ) {
+      for (i = 0; i < setHouse2Num; i++) {
+          houses[i] = house.clone();
+          houses[i].castShadow = true;
+          houses[i].position.x = getRandomInt(-(setSizeX/2 - edgeBuffer),(setSizeX/2 - edgeBuffer));
+          houses[i].position.z = getRandomInt(-(setSizeY/2 - edgeBuffer),(setSizeY/2 - edgeBuffer));
+          var raycaster = new THREE.Raycaster();
+          raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
+          var intersects = raycaster.intersectObject(terrainScene);
+          houses[i].position.y =50;
+          houses[i].scale.set(10,10,10);
+          scene.add( houses[i] );
+        }
+
+    });
+    loader.load("models/m_tree1_seasonSpring.json", function ( house ) {
+      for (i = 0; i < setTree1Num; i++) {
+          houses[i] = house.clone();
+          houses[i].castShadow = true;
+          houses[i].position.x = getRandomInt(-(setSizeX/2 - edgeBuffer),(setSizeX/2 - edgeBuffer));
+          houses[i].position.z = getRandomInt(-(setSizeY/2 - edgeBuffer),(setSizeY/2 - edgeBuffer));
+          var raycaster = new THREE.Raycaster();
+          raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
+          var intersects = raycaster.intersectObject(terrainScene);
+          houses[i].position.y =50;
+          houses[i].scale.set(10,10,10);
+          scene.add( houses[i] );
+        }
+
+    });
+    loader.load("models/m_tree2_seasonSpring.json", function ( house ) {
+      for (i = 0; i < setTree2Num; i++) {
+          houses[i] = house.clone();
+          houses[i].castShadow = true;
+          houses[i].position.x = getRandomInt(-(setSizeX/2 - edgeBuffer),(setSizeX/2 - edgeBuffer));
+          houses[i].position.z = getRandomInt(-(setSizeY/2 - edgeBuffer),(setSizeY/2 - edgeBuffer));
+          var raycaster = new THREE.Raycaster();
+          raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
+          var intersects = raycaster.intersectObject(terrainScene);
+          houses[i].position.y =50;
+          houses[i].scale.set(10,10,10);
+          scene.add( houses[i] );
+        }
+    });
+  }
+    if (setSeason == 1) {
+      loader.load("models/m_house1_seasonSummer.json", function ( house ) {
+        for (i = 0; i < setHouse1Num; i++) {
+            houses[i] = house.clone();
+            houses[i].castShadow = true;
+            houses[i].position.x = getRandomInt(-(setSizeX/2 - edgeBuffer),(setSizeX/2 - edgeBuffer));
+            houses[i].position.z = getRandomInt(-(setSizeY/2 - edgeBuffer),(setSizeY/2 - edgeBuffer));
+            var raycaster = new THREE.Raycaster();
+            raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
+            var intersects = raycaster.intersectObject(terrainScene);
+            houses[i].position.y =50;
+            houses[i].scale.set(10,10,10);
+            scene.add( houses[i] );
+          }
+
+      });
+      loader.load("models/m_house2_seasonSummer.json", function ( house ) {
+        for (i = 0; i < setHouse2Num; i++) {
+            houses[i] = house.clone();
+            houses[i].castShadow = true;
+            houses[i].position.x = getRandomInt(-(setSizeX/2 - edgeBuffer),(setSizeX/2 - edgeBuffer));
+            houses[i].position.z = getRandomInt(-(setSizeY/2 - edgeBuffer),(setSizeY/2 - edgeBuffer));
+            var raycaster = new THREE.Raycaster();
+            raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
+            var intersects = raycaster.intersectObject(terrainScene);
+            houses[i].position.y =50;
+            houses[i].scale.set(10,10,10);
+            scene.add( houses[i] );
+          }
+
+      });
+      loader.load("models/m_tree1_seasonSummer.json", function ( house ) {
+        for (i = 0; i < setTree1Num; i++) {
+            houses[i] = house.clone();
+            houses[i].castShadow = true;
+            houses[i].position.x = getRandomInt(-(setSizeX/2 - edgeBuffer),(setSizeX/2 - edgeBuffer));
+            houses[i].position.z = getRandomInt(-(setSizeY/2 - edgeBuffer),(setSizeY/2 - edgeBuffer));
+            var raycaster = new THREE.Raycaster();
+            raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
+            var intersects = raycaster.intersectObject(terrainScene);
+            houses[i].position.y =50;
+            houses[i].scale.set(10,10,10);
+            scene.add( houses[i] );
+          }
+
+      });
+      loader.load("models/m_tree2_seasonSummer.json", function ( house ) {
+        for (i = 0; i < setTree2Num; i++) {
+            houses[i] = house.clone();
+            houses[i].castShadow = true;
+            houses[i].position.x = getRandomInt(-(setSizeX/2 - edgeBuffer),(setSizeX/2 - edgeBuffer));
+            houses[i].position.z = getRandomInt(-(setSizeY/2 - edgeBuffer),(setSizeY/2 - edgeBuffer));
+            var raycaster = new THREE.Raycaster();
+            raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
+            var intersects = raycaster.intersectObject(terrainScene);
+            houses[i].position.y =50;
+            houses[i].scale.set(10,10,10);
+            scene.add( houses[i] );
+          }
+      });
+    }
+    if (setSeason == 2) {
+      loader.load("models/m_house1_seasonFall.json", function ( house ) {
+        for (i = 0; i < setHouse1Num; i++) {
+            houses[i] = house.clone();
+            houses[i].castShadow = true;
+            houses[i].position.x = getRandomInt(-(setSizeX/2 - edgeBuffer),(setSizeX/2 - edgeBuffer));
+            houses[i].position.z = getRandomInt(-(setSizeY/2 - edgeBuffer),(setSizeY/2 - edgeBuffer));
+            var raycaster = new THREE.Raycaster();
+            raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
+            var intersects = raycaster.intersectObject(terrainScene);
+            houses[i].position.y =50;
+            houses[i].scale.set(10,10,10);
+            scene.add( houses[i] );
+          }
+
+      });
+      loader.load("models/m_house2_seasonFall.json", function ( house ) {
+        for (i = 0; i < setHouse2Num; i++) {
+            houses[i] = house.clone();
+            houses[i].castShadow = true;
+            houses[i].position.x = getRandomInt(-(setSizeX/2 - edgeBuffer),(setSizeX/2 - edgeBuffer));
+            houses[i].position.z = getRandomInt(-(setSizeY/2 - edgeBuffer),(setSizeY/2 - edgeBuffer));
+            var raycaster = new THREE.Raycaster();
+            raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
+            var intersects = raycaster.intersectObject(terrainScene);
+            houses[i].position.y =50;
+            houses[i].scale.set(10,10,10);
+            scene.add( houses[i] );
+          }
+
+      });
+      loader.load("models/m_tree1_seasonFall.json", function ( house ) {
+        for (i = 0; i < setTree1Num; i++) {
+            houses[i] = house.clone();
+            houses[i].castShadow = true;
+            houses[i].position.x = getRandomInt(-(setSizeX/2 - edgeBuffer),(setSizeX/2 - edgeBuffer));
+            houses[i].position.z = getRandomInt(-(setSizeY/2 - edgeBuffer),(setSizeY/2 - edgeBuffer));
+            var raycaster = new THREE.Raycaster();
+            raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
+            var intersects = raycaster.intersectObject(terrainScene);
+            houses[i].position.y =50;
+            houses[i].scale.set(10,10,10);
+            scene.add( houses[i] );
+          }
+
+      });
+      loader.load("models/m_tree2_seasonFall.json", function ( house ) {
+        for (i = 0; i < setTree2Num; i++) {
+            houses[i] = house.clone();
+            houses[i].castShadow = true;
+            houses[i].position.x = getRandomInt(-(setSizeX/2 - edgeBuffer),(setSizeX/2 - edgeBuffer));
+            houses[i].position.z = getRandomInt(-(setSizeY/2 - edgeBuffer),(setSizeY/2 - edgeBuffer));
+            var raycaster = new THREE.Raycaster();
+            raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
+            var intersects = raycaster.intersectObject(terrainScene);
+            houses[i].position.y =50;
+            houses[i].scale.set(10,10,10);
+            scene.add( houses[i] );
+          }
+      });
+    }
+    if (setSeason == 3) {
+      loader.load("models/m_house1_seasonWinter.json", function ( house ) {
+        for (i = 0; i < setHouse1Num; i++) {
+            houses[i] = house.clone();
+            houses[i].castShadow = true;
+            houses[i].position.x = getRandomInt(-(setSizeX/2 - edgeBuffer),(setSizeX/2 - edgeBuffer));
+            houses[i].position.z = getRandomInt(-(setSizeY/2 - edgeBuffer),(setSizeY/2 - edgeBuffer));
+            var raycaster = new THREE.Raycaster();
+            raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
+            var intersects = raycaster.intersectObject(terrainScene);
+            houses[i].position.y =50;
+            houses[i].scale.set(10,10,10);
+            scene.add( houses[i] );
+          }
+
+      });
+      loader.load("models/m_house2_seasonWinter.json", function ( house ) {
+        for (i = 0; i < setHouse2Num; i++) {
+            houses[i] = house.clone();
+            houses[i].castShadow = true;
+            houses[i].position.x = getRandomInt(-(setSizeX/2 - edgeBuffer),(setSizeX/2 - edgeBuffer));
+            houses[i].position.z = getRandomInt(-(setSizeY/2 - edgeBuffer),(setSizeY/2 - edgeBuffer));
+            var raycaster = new THREE.Raycaster();
+            raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
+            var intersects = raycaster.intersectObject(terrainScene);
+            houses[i].position.y =50;
+            houses[i].scale.set(10,10,10);
+            scene.add( houses[i] );
+          }
+
+      });
+      loader.load("models/m_tree1_seasonWinter.json", function ( house ) {
+        for (i = 0; i < setTree1Num; i++) {
+            houses[i] = house.clone();
+            houses[i].castShadow = true;
+            houses[i].position.x = getRandomInt(-(setSizeX/2 - edgeBuffer),(setSizeX/2 - edgeBuffer));
+            houses[i].position.z = getRandomInt(-(setSizeY/2 - edgeBuffer),(setSizeY/2 - edgeBuffer));
+            var raycaster = new THREE.Raycaster();
+            raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
+            var intersects = raycaster.intersectObject(terrainScene);
+            houses[i].position.y =50;
+            houses[i].scale.set(10,10,10);
+            scene.add( houses[i] );
+          }
+
+      });
+      loader.load("models/m_tree2_seasonWinter.json", function ( house ) {
+        for (i = 0; i < setTree2Num; i++) {
+            houses[i] = house.clone();
+            houses[i].castShadow = true;
+            houses[i].position.x = getRandomInt(-(setSizeX/2 - edgeBuffer),(setSizeX/2 - edgeBuffer));
+            houses[i].position.z = getRandomInt(-(setSizeY/2 - edgeBuffer),(setSizeY/2 - edgeBuffer));
+            var raycaster = new THREE.Raycaster();
+            raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
+            var intersects = raycaster.intersectObject(terrainScene);
+            houses[i].position.y =50;
+            houses[i].scale.set(10,10,10);
+            scene.add( houses[i] );
+          }
+      });
+    }
+}
+
+var gui;
+function buildGui() {
+      gui = new dat.GUI();
+      var params = {
+        time: time_multiplier,
+        season: setSeason,
+        color_day: spotlight_day.color.getHex(),
+        color_night: spotlight_night.color.getHex(),
+        sizeX : setSizeX,
+        sizeY : setSizeY,
+        minHeight : setMinHeight,
+        maxHeight : setMaxHeight,
+        house1Num : setHouse1Num,
+        house2Num : setHouse2Num,
+        tree1Num : setTree1Num,
+        tree2Num : setTree2Num,
+        generateWorld : function(){generateWorld()}
+      }
+
+      // Allows the user to change the time of day and the colour of the 'day' and 'night' spotlights
+      var gTime = gui.addFolder('Time');
+      gTime.addColor( params, 'color_day' ).onChange( function ( val ) {
+        spotlight_day.color.setHex(val);
+      } );
+      gTime.addColor( params, 'color_night' ).onChange( function ( val ) {
+        spotlight_night.color.setHex(val);
+      } );
+      gTime.add( params, 'time', -1, 1 ).onChange( function ( val ) {
+        time_multiplier = val;
+      } );
+
+      // Allows the user to specify the values used the next time the terrain is generated
+      var gWorldGeneration = gui.addFolder('World_Generation');
+
+      // Creates a drop-down menu allowing the user to choose which 'season' their generated Civilisation
+      // will be experiencing
+      gWorldGeneration.add( params, 'season', { 'Spring': 0, 'Summer': 1, 'Fall': 2, 'Winter': 3 } ).onChange( function ( val ) {
+      switch ( val ) {
+        case '0':
+          setSeason = 0;
+          break;
+        case '1':
+          setSeason = 1;
+          break;
+        case '2':
+          setSeason = 2;
+          break;
+        case '3':
+          setSeason = 3;
+          break;
+      }
+      } );
+
+      // Allows the user to specify the horizontal size of the terrain as well as the highest and lowest
+      // points terrain can reach
+      gWorldGeneration.add( params, 'sizeX', 1, 2048 ).onChange( function ( val ) {
+        setSizeX = val;
+      } );
+      gWorldGeneration.add( params, 'sizeY', 1, 2048 ).onChange( function ( val ) {
+        setSizeY = val;
+      } );
+      gWorldGeneration.add( params, 'minHeight', 1, 100 ).onChange( function ( val ) {
+        setMinHeight = val;
+       } );
+      gWorldGeneration.add( params, 'maxHeight', 1, 100 ).onChange( function ( val ) {
+        setMaxHeight = val;
+      } );
+
+      // Allows the user to specify the number of each type of building to appear the next time the
+      // terrain is generated
+      var gObjectSettings = gui.addFolder('Object_Settings');
+      gObjectSettings.add( params, 'house1Num', 0, 100 ).onChange( function ( val ) {
+        setHouse1Num = val;
+      } );
+      gObjectSettings.add( params, 'house2Num', 0, 100 ).onChange( function ( val ) {
+        setHouse2Num = val;
+      } );
+      gObjectSettings.add( params, 'tree1Num', 0, 100 ).onChange( function ( val ) {
+        setTree1Num = val;
+      } );
+      gObjectSettings.add( params, 'tree2Num', 0, 100 ).onChange( function ( val ) {
+        setTree2Num = val;
+      } );
+
+      // Allows the user to call the 'generateWorld' function and created a new civilisation using the
+      // new values inputted
+      gui.add(params, 'generateWorld');
+
+      gTime.open();
+      gWorldGeneration.open();
+      gObjectSettings.open();
+    }
+ buildGui();
+
+    //final update loop
+    var MyUpdateLoop = function ( )
+    {
+      // Updates the position of the 'day' and 'night' spotlights depending on the user's changes
+      spotlight_day.position.x = 5000;
+      spotlight_day.position.y = -(time_multiplier * 3500);
+      spotlight_night.position.x= -5000;
+      spotlight_night.position.y = (time_multiplier * 3500);
+      spotlight_night.rotation.z.set = ( 0, time_multiplier, 0 );
+      control.update();
+      //call the render with the scene and the camera
+      renderer.render(scene,camera);
+      //finally perform a recoursive call to update again
+      //this must be called because the mouse changes the camera position
+      requestAnimationFrame(MyUpdateLoop);
+    };
+    requestAnimationFrame(MyUpdateLoop);
+
+    // Generates the terrain when the file is first opened
+    generateWorld();
+
+    //this function is called when the window is resized
+    var MyResize = function ( )
+    {
+      //get the new sizes
+      var width = window.innerWidth;
+      var height = window.innerHeight;
+      //then update the renderer
+      renderer.setSize(width,height);
+      //and update the aspect ratio of the camera
+      camera.aspect = width/height;
+      //update the projection matrix given the new values
+      camera.updateProjectionMatrix();
+      //and finally render the scene again
+      renderer.render(scene,camera);
+
+
+    };
+    //link the resize of the window to the update of the camera
+    window.addEventListener( 'resize', MyResize);
+
+    // Builds the GUI allowing the user to make changes and generate a new terrain
+
+    </script>
+  </body>
+</html>
