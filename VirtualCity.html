@@ -503,8 +503,8 @@ function buildGui() {
         color_night: spotlight_night.color.getHex(),
         sizeX : setSizeX,
         sizeY : setSizeY,
-        //minHeight : setMinHeight,
-        //maxHeight : setMaxHeight,
+        minHeight : setMinHeight,
+        maxHeight : setMaxHeight,
         house1Num : setHouse1Num,
         house2Num : setHouse2Num,
         tree1Num : setTree1Num,
@@ -554,12 +554,12 @@ function buildGui() {
       gWorldGeneration.add( params, 'sizeY', 1, 2048 ).onChange( function ( val ) {
         setSizeY = val;
       } );
-      // gWorldGeneration.add( params, 'minHeight', 1, 100 ).onChange( function ( val ) {
-      //   setMinHeight = val;
-      // } );
-      // gWorldGeneration.add( params, 'maxHeight', 1, 100 ).onChange( function ( val ) {
-      //   setMaxHeight = val;
-      // } );
+      gWorldGeneration.add( params, 'minHeight', 1, 100 ).onChange( function ( val ) {
+        setMinHeight = val;
+       } );
+      gWorldGeneration.add( params, 'maxHeight', 1, 100 ).onChange( function ( val ) {
+        setMaxHeight = val;
+      } );
 
       // Allows the user to specify the number of each type of building to appear the next time the
       // terrain is generated
