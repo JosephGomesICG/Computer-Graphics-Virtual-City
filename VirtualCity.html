@@ -37,6 +37,8 @@
 
     <div id="info">
       <p>Double-click object to change model<br>
+      <p>Hold Left-click to rotate camera<br>
+      <p>Hold Right-click to shift camera view<br>
     </div>
     <script>
       function getRandomInt(min, max) {
@@ -116,7 +118,7 @@
 
       // Sets how many copies of the second type of tree for a season will be generated
       var setTree2Num = 15;
-      
+
       // Value used to ensure models are not placed beyond the boundaries of the terrain
       var edgeBuffer = 20;
 
@@ -268,9 +270,9 @@
         scene.add(group);
         // If setMinHeight and setMaxHeight are assigned the same value, setMaxHeight is slightly adjusted
         // Otherwise both variables having the same value will cause the terrain to fail to appear after generation
-        // if (setMinHeight == setMaxHeight) {
-        //   setMaxHeight = setMinHeight + 1;
-        // }
+        if (setMinHeight == setMaxHeight) {
+          setMaxHeight = setMinHeight + 1;
+        }
         var terrain_texture;
 
         var spring_texture = new THREE.TextureLoader().load('Textures/spring.jpg')
@@ -303,69 +305,67 @@
           terrain_texture = winter_texture;
 
         material = new THREE.MeshLambertMaterial({ map : terrain_texture });
-        plane = new THREE.Mesh(new THREE.PlaneGeometry(setSizeX, setSizeY), material);
-        plane.material.side = THREE.DoubleSide;
-        plane.rotation.x = Math.PI / 2;
-        plane.position.y = 50;
-        plane.receiveShadow = true;
-        scene.add(plane);
 
         //Handles the generation of the terrain, being passed the parameters initialised above
-        // var terrainScene = new THREE.Terrain({
-        //   easing: THREE.Terrain.Linear,
-        //   //frequency: setFrequency,
-        //   heightmap: THREE.Terrain.DiamondSquare,
-        //   // Sets the material used by the terrain
-        //   material: terrain_texture,
-        //   // Sets the highest point any part of the terrain can reach
-        //   maxHeight: setMaxHeight,
-        //   // Sets the lowest point any part of the terrain can reach
-        //   minHeight: setMinHeight,
-        //   // Represents the number of different y-coordinates terrain will be generated at
-        //   steps: setSteps,
-        //   useBufferGeometry: false,
-        //   //xSegments: setSegmentsX,
-        //   // Sets the size of the terrain on the x-axis
-        //   xSize: setSizeX,
-        //   //ySegments: setSegmentsY,
-        //   // Sets the size of the terrain on the z-axis
-        //   ySize: setSizeY,
-        // });
-        /*var geo = terrainScene.children[0].geometry;
-        decoScene = THREE.Terrain.ScatterMeshes(geo, {
-          mesh: new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 12, 6)),
-          w: setSegmentsX,
-          h: setSegmentsY,
-          spread: 0.02,
-          randomness: Math.random,
-        });*/
+        var terrainScene = new THREE.Terrain({
+          easing: THREE.Terrain.Linear,
+          //frequency: setFrequency,
+          heightmap: THREE.Terrain.DiamondSquare,
+
+          // Sets the material used by the terrain
+          material: material,
+
+          // Sets the highest point any part of the terrain can reach
+          maxHeight: setMaxHeight,
+
+          // Sets the lowest point any part of the terrain can reach
+          minHeight: setMinHeight,
+
+          // Represents the number of different y-coordinates terrain will be generated at
+          steps: setSteps,
+
+          useBufferGeometry: false,
+
+          //xSegments: setSegmentsX,
+          // Sets the size of the terrain on the x-axis
+          xSize: setSizeX,
+
+          //ySegments: setSegmentsY,
+          // Sets the size of the terrain on the z-axis
+          ySize: setSizeY,
+        });
+
         // Positions the 'day' spotlight, can be moved by the user
-
-
-
         spotlight_day.position.x = (time_multiplier * 300);
         spotlight_day.position.y = -(time_multiplier * 300);
         spotlight_day.rotation.x = ( 0, time_multiplier, 0 );
+
         // Decides the angle of the 'day' spotlight as well as it's area of coverage and whether it casts a shadow
         spotlight_day.angle = (-(Math.PI / 2));
         spotlight_day.penumbra = 0.3;
         spotlight_day.castShadow = true;
+
         // Adds the 'day' spotlight to the scene
         scene.add(spotlight_day);
+
         // Positions the 'night' spotlight, can be moved by the user
         spotlight_night.position.x= -(time_multiplier * 300);
         spotlight_night.position.y = (time_multiplier * 300);
+
         // Decides the angle of the 'day' spotlight as well as it's area of coverage and whether it casts a shadow
         spotlight_night.angle = (-(Math.PI / 2));
         spotlight_night.penumbra = 0.3;
         spotlight_night.castShadow = true;
+
         // Adds the 'night' spotlight to the scene
         scene.add(spotlight_night);
         // // Adds the terrain to the scene
-        // terrainScene.receiveShadow = true;
-        // scene.add(terrainScene);
+        terrainScene.receiveShadow = true;
+        scene.add(terrainScene);
+
         // Adds the ambient light to the scene
         scene.add(ambientlight);
+
         // Loads and places models
         // Models used depends on the 'season' value, 1 = Spring, 2 = Summer, 3 = Fall, 4 = Winter
         if (setSeason == 0) {
@@ -378,6 +378,7 @@
             // raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
             // var intersects = raycaster.intersectObject(terrainScene);
             houses[i].position.y =50;
+            houses[i].rotation.y = getRandomInt(1, 300);
             // Increases size of model to a better visible value
             houses[i].scale.set(10,10,10);
             // Adds model to scene
@@ -392,6 +393,7 @@
             // raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
             // var intersects = raycaster.intersectObject(terrainScene);
             houses[i].position.y =50;
+            houses[i].rotation.y = getRandomInt(1, 300);
             houses[i].scale.set(10,10,10);
             group.add( houses[i] );
           }
@@ -404,6 +406,7 @@
             // raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
             // var intersects = raycaster.intersectObject(terrainScene);
             houses[i].position.y =50;
+            houses[i].rotation.y = getRandomInt(1, 300);
             houses[i].scale.set(10,10,10);
             group.add( houses[i] );
           }
@@ -416,6 +419,7 @@
             // raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
             // var intersects = raycaster.intersectObject(terrainScene);
             houses[i].position.y =50;
+            houses[i].rotation.y = getRandomInt(1, 300);
             houses[i].scale.set(10,10,10);
             group.add( houses[i] );
           }
@@ -430,6 +434,7 @@
             // raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
             // var intersects = raycaster.intersectObject(terrainScene);
             houses[i].position.y =50;
+            houses[i].rotation.y = getRandomInt(1, 300);
             houses[i].scale.set(10,10,10);
             group.add( houses[i] );
           }
@@ -441,6 +446,7 @@
             // raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
             // var intersects = raycaster.intersectObject(terrainScene);
             houses[i].position.y =50;
+            houses[i].rotation.y = getRandomInt(1, 300);
             houses[i].scale.set(10,10,10);
             group.add( houses[i] );
           }
@@ -453,6 +459,7 @@
             // raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
             // var intersects = raycaster.intersectObject(terrainScene);
             houses[i].position.y =50;
+            houses[i].rotation.y = getRandomInt(1, 300);
             houses[i].scale.set(10,10,10);
             group.add( houses[i] );
           }
@@ -465,6 +472,7 @@
             // raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
             // var intersects = raycaster.intersectObject(terrainScene);
             houses[i].position.y =50;
+            houses[i].rotation.y = getRandomInt(1, 300);
             houses[i].scale.set(10,10,10);
             group.add( houses[i] );
           }
@@ -479,6 +487,7 @@
             // raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
             // var intersects = raycaster.intersectObject(terrainScene);
             houses[i].position.y =50;
+            houses[i].rotation.y = getRandomInt(1, 300);
             houses[i].scale.set(10,10,10);
             group.add( houses[i] );
           }
@@ -491,6 +500,7 @@
             // raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
             // var intersects = raycaster.intersectObject(terrainScene);
             houses[i].position.y =50;
+            houses[i].rotation.y = getRandomInt(1, 300);
             houses[i].scale.set(10,10,10);
             group.add( houses[i] );
           }
@@ -503,6 +513,7 @@
             // raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
             // var intersects = raycaster.intersectObject(terrainScene);
             houses[i].position.y =50;
+            houses[i].rotation.y = getRandomInt(1, 300);
             houses[i].scale.set(10,10,10);
             group.add( houses[i] );
           }
@@ -515,6 +526,7 @@
             // raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
             // var intersects = raycaster.intersectObject(terrainScene);
             houses[i].position.y =50;
+            houses[i].rotation.y = getRandomInt(1, 300);
             houses[i].scale.set(10,10,10);
             group.add( houses[i] );
           }
@@ -528,6 +540,7 @@
             // raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
             // var intersects = raycaster.intersectObject(terrainScene);
             houses[i].position.y =50;
+            houses[i].rotation.y = getRandomInt(1, 300);
             houses[i].scale.set(10,10,10);
             group.add( houses[i] );
           }
@@ -540,6 +553,7 @@
             // raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
             // var intersects = raycaster.intersectObject(terrainScene);
             houses[i].position.y =50;
+            houses[i].rotation.y = getRandomInt(1, 300);
             houses[i].scale.set(10,10,10);
             group.add( houses[i] );
           }
@@ -552,6 +566,7 @@
             // raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
             // var intersects = raycaster.intersectObject(terrainScene);
             houses[i].position.y =50;
+            houses[i].rotation.y = getRandomInt(1, 300);
             houses[i].scale.set(10,10,10);
             group.add( houses[i] );
           }
@@ -564,6 +579,7 @@
             // raycaster.set(houses[i].position, new THREE.Vector3(0, -1, 0));
             // var intersects = raycaster.intersectObject(terrainScene);
             houses[i].position.y =50;
+            houses[i].rotation.y = getRandomInt(1, 300);
             houses[i].scale.set(10,10,10);
             group.add( houses[i] );
           }
@@ -579,8 +595,8 @@
           color_night: spotlight_night.color.getHex(),
           sizeX : setSizeX,
           sizeY : setSizeY,
-          //minHeight : setMinHeight,
-          //maxHeight : setMaxHeight,
+          minHeight : setMinHeight,
+          maxHeight : setMaxHeight,
           house1Num : setHouse1Num,
           house2Num : setHouse2Num,
           tree1Num : setTree1Num,
@@ -626,12 +642,12 @@
         gWorldGeneration.add( params, 'sizeY', 1, 2048 ).onChange( function ( val ) {
           setSizeY = val;
         } );
-        // gWorldGeneration.add( params, 'minHeight', 1, 100 ).onChange( function ( val ) {
-        //   setMinHeight = val;
-        // } );
-        // gWorldGeneration.add( params, 'maxHeight', 1, 100 ).onChange( function ( val ) {
-        //   setMaxHeight = val;
-        // } );
+        gWorldGeneration.add( params, 'minHeight', 1, 100 ).onChange( function ( val ) {
+          setMinHeight = val;
+        } );
+        gWorldGeneration.add( params, 'maxHeight', 1, 100 ).onChange( function ( val ) {
+          setMaxHeight = val;
+        } );
         // Allows the user to specify the number of each type of building to appear the next time the
         // terrain is generated
         var gObjectSettings = gui.addFolder('Object_Settings');
